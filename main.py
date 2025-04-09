@@ -85,32 +85,40 @@ def send_mail(name, email, phone, message):
 
 @app.route("/")
 def home():
-
-
+    """Render the homepage with tourist place data for Pune and Mumbai."""
     return render_template("homepage/homepage.html",
                            pune=pune_data,
                            mumbai=mumbai_data,
                            pune_list=pune_places,
                            mumbai_list=mumbai_places,
                            user=current_user)
+
+
 @app.route("/explore")
 def explore():
+    """Render the explore destinations page with city data."""
     return render_template("explore-destinations/explore-destinations.html",pune=pune_data,
                            mumbai=mumbai_data,
                            pune_list=pune_places,
                            mumbai_list=mumbai_places,
                            user=current_user)
 
+
 @app.route("/cost_estimation")
 def cost_estimation():
+    """Render the travel cost estimation page."""
     return render_template("cost-estimate/cost-estimate.html",user=current_user)
+
 
 @app.route("/plan_trip")
 def plan_trip():
+    """Render the trip planning page for users."""
     return render_template("plan-your-trip/plan-your-trip.html",user=current_user)
+
 
 @app.route("/destination/<string:place>/<string:name>")
 def destination_detail(place,name):
+    """Display details for a specific tourist destination."""
     if place =="Pune":
         place_detail = pune_data[name]
     elif place == "Mumbai":
@@ -119,8 +127,11 @@ def destination_detail(place,name):
         place_detail = data
 
     return render_template("destination-details/details.html",detail=place_detail,name = name,user=current_user,place=place)
+
+
 @app.route("/login",methods=["GET","POST"])
 def login():
+    """Handle user login authentication and session setup."""
     form = LoginForm()
     if form.validate_on_submit():
         user_email = form.email.data
@@ -139,6 +150,7 @@ def login():
 
 @app.route("/register",methods=["GET","POST"])
 def register():
+    """Register a new user and create an account if validation passes."""
     form = RegisterForm()
     if form.validate_on_submit():
         existing_user = User.query.filter_by(email=form.email.data).first()
@@ -161,18 +173,21 @@ def register():
             db.session.rollback()
             flash("An error occurred during registration. Please try again.")
 
-            # Log the error here for debugging
         return redirect(url_for("home"))
 
     return render_template("user_login_page/register.html",form=form,current_user=current_user)
 
+
 @app.route("/logout")
 def logout():
+    """Log out the current user and redirect to home."""
     logout_user()
     return redirect(url_for("home"))
 
+
 @app.route("/add/<string:place>/<string:name>")
 def add_place(place,name):
+    """Add a destination to the current user's saved list."""
     if not current_user.is_authenticated:
         flash("You are not logged in!")
         return redirect(url_for("login"))
@@ -202,18 +217,16 @@ def add_place(place,name):
     return redirect(url_for('destination_detail', place=place, name=name))
 
 
-
 @app.route("/dashboard")
 def dashboard():
+    """Render the user dashboard with their saved destinations and crowd detection."""
     destinations = db.session.execute(db.select(Destination).where(Destination.user_id == current_user.id)).scalars().all()
-    print("\nUser Destinations:")
-    # for dest in destinations:
-    #     print(f"ID: {dest.id} | Name: {dest.name} | Place: {dest.place}")
     return render_template("dashboard/dashboard.html",user=current_user,destination=destinations,data=data,model=detection_model)
 
 
 @app.route("/contact", methods=["POST", "GET"])
 def contact():
+    """Handle contact form submission and send confirmation email."""
     if request.method == "POST":
         data = request.form
         print(data)
@@ -221,12 +234,15 @@ def contact():
         return render_template("contact/contact.html", current_user=current_user, msg_sent=True)
     return render_template("contact/contact.html", current_user=current_user, msg_snet=False)
 
+
 @app.route("/delete/<int:dest_id>")
 def delete(dest_id):
+    """Delete a destination from the user's saved list."""
     destination = db.get_or_404(Destination, dest_id)
     db.session.delete(destination)
     db.session.commit()
     return redirect(url_for("dashboard"))
+
 
 
 if __name__ == "__main__":
